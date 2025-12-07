@@ -1,0 +1,353 @@
+syntax = "proto3";
+
+package blob_service_dev;
+
+// Document parser service for converting documents to various formats
+service DocumentParserService {
+  // Parse document to Markdown format
+  rpc ParseToMarkdown(ParseToMarkdownRequest) returns (ParseToMarkdownResponse);
+  
+  // Parse document to plain text format
+  rpc ParseToText(ParseToTextRequest) returns (ParseToTextResponse);
+  
+  // Parse document to JSON format
+  rpc ParseToJSON(ParseToJSONRequest) returns (ParseToJSONResponse);
+  
+  // Get document metadata
+  rpc GetMetadata(GetMetadataRequest) returns (GetMetadataResponse);
+  
+  // Get table of contents (PDF specific)
+  rpc GetTableOfContents(GetTableOfContentsRequest) returns (GetTableOfContentsResponse);
+}
+
+// Parse to Markdown request
+message ParseToMarkdownRequest {
+  // File path or file content (base64 encoded)
+  oneof file_source {
+    string file_path = 1;
+    bytes file_content = 2;
+  }
+  
+  // Parsing options
+  ParseOptions options = 3;
+}
+
+// Parse to Markdown response
+message ParseToMarkdownResponse {
+  // Success status
+  bool success = 1;
+  
+  // Error message if parsing failed
+  string error_message = 2;
+  
+  // Result content
+  oneof result {
+    // Single markdown string
+    string markdown = 3;
+    // Page chunks (list of page dictionaries)
+    PageChunks page_chunks = 4;
+  }
+}
+
+// Parse to Text request
+message ParseToTextRequest {
+  // File path or file content (base64 encoded)
+  oneof file_source {
+    string file_path = 1;
+    bytes file_content = 2;
+  }
+  
+  // Parsing options
+  ParseOptions options = 3;
+}
+
+// Parse to Text response
+message ParseToTextResponse {
+  // Success status
+  bool success = 1;
+  
+  // Error message if parsing failed
+  string error_message = 2;
+  
+  // Extracted text content
+  string text = 3;
+}
+
+// Parse to JSON request
+message ParseToJSONRequest {
+  // File path or file content (base64 encoded)
+  oneof file_source {
+    string file_path = 1;
+    bytes file_content = 2;
+  }
+  
+  // Parsing options
+  ParseOptions options = 3;
+}
+
+// Parse to JSON response
+message ParseToJSONResponse {
+  // Success status
+  bool success = 1;
+  
+  // Error message if parsing failed
+  string error_message = 2;
+  
+  // JSON-formatted string
+  string json = 3;
+}
+
+// Get metadata request
+message GetMetadataRequest {
+  // File path or file content (base64 encoded)
+  oneof file_source {
+    string file_path = 1;
+    bytes file_content = 2;
+  }
+}
+
+// Get metadata response
+message GetMetadataResponse {
+  // Success status
+  bool success = 1;
+  
+  // Error message if extraction failed
+  string error_message = 2;
+  
+  // Document metadata
+  DocumentMetadata metadata = 3;
+}
+
+// Get table of contents request
+message GetTableOfContentsRequest {
+  // File path or file content (base64 encoded)
+  oneof file_source {
+    string file_path = 1;
+    bytes file_content = 2;
+  }
+}
+
+// Get table of contents response
+message GetTableOfContentsResponse {
+  // Success status
+  bool success = 1;
+  
+  // Error message if extraction failed
+  string error_message = 2;
+  
+  // Table of contents entries
+  repeated TOCEntry entries = 3;
+}
+
+// Parsing options for document parsing
+message ParseOptions {
+  // Image resolution in DPI
+  optional int32 dpi = 1;
+  
+  // OCR image resolution in DPI
+  optional int32 ocr_dpi = 2;
+  
+  // Whether to use OCR
+  optional bool use_ocr = 3;
+  
+  // Table detection strategy
+  optional string table_strategy = 4;
+  
+  // Whether to embed images as base64
+  optional bool embed_images = 5;
+  
+  // Whether to extract words
+  optional bool extract_words = 6;
+  
+  // Font size limit
+  optional float fontsize_limit = 7;
+  
+  // Whether to include footer
+  optional bool footer = 8;
+  
+  // Whether to include header
+  optional bool header = 9;
+  
+  // Whether to force text extraction
+  optional bool force_text = 10;
+  
+  // Image format (png, jpg, etc.)
+  optional string image_format = 11;
+  
+  // Image path for storing images
+  optional string image_path = 12;
+  
+  // Whether to write images to disk
+  optional bool write_images = 13;
+  
+  // Whether to return page chunks instead of single string
+  optional bool page_chunks = 14;
+  
+  // Specific pages to parse (0-based page numbers)
+  repeated int32 pages = 15;
+  
+  // Whether to show progress
+  optional bool show_progress = 16;
+  
+  // Page width for reflowable documents
+  optional float page_width = 17;
+  
+  // Page height for reflowable documents
+  optional float page_height = 18;
+  
+  // Whether to ignore code blocks
+  optional bool ignore_code = 19;
+  
+  // Whether to ignore graphics
+  optional bool ignore_graphics = 20;
+  
+  // Whether to ignore images
+  optional bool ignore_images = 21;
+  
+  // Image size limit (0-1, relative to page size)
+  optional float image_size_limit = 22;
+}
+
+// Page chunks structure for markdown parsing
+message PageChunks {
+  repeated PageChunk chunks = 1;
+}
+
+// Single page chunk
+message PageChunk {
+  // Page metadata
+  PageMetadata metadata = 1;
+  
+  // Table of contents items for this page
+  repeated TOCEntry toc_items = 2;
+  
+  // Tables on this page
+  repeated TableInfo tables = 3;
+  
+  // Images on this page
+  repeated ImageInfo images = 4;
+  
+  // Graphics on this page
+  repeated GraphicsInfo graphics = 5;
+  
+  // Page content as Markdown text
+  string text = 6;
+  
+  // Extracted words (if extract_words=true)
+  repeated WordInfo words = 7;
+}
+
+// Page metadata
+message PageMetadata {
+  // Document metadata
+  DocumentMetadata document_metadata = 1;
+  
+  // File path
+  string file_path = 2;
+  
+  // Total page count
+  int32 page_count = 3;
+  
+  // Current page number (1-based)
+  int32 page_number = 4;
+}
+
+// Document metadata
+message DocumentMetadata {
+  // Document title
+  string title = 1;
+  
+  // Document author
+  string author = 2;
+  
+  // Document subject
+  string subject = 3;
+  
+  // Document creator
+  string creator = 4;
+  
+  // Document producer
+  string producer = 5;
+  
+  // Creation date (ISO 8601 format)
+  string creation_date = 6;
+  
+  // Modification date (ISO 8601 format)
+  string modification_date = 7;
+  
+  // Total page count
+  int32 page_count = 8;
+  
+  // File path
+  string file_path = 9;
+  
+  // Additional metadata as key-value pairs
+  map<string, string> additional_metadata = 10;
+}
+
+// Table of contents entry
+message TOCEntry {
+  // Hierarchy level (1-6)
+  int32 level = 1;
+  
+  // Entry title
+  string title = 2;
+  
+  // Page number (1-based)
+  int32 page_number = 3;
+}
+
+// Table information
+message TableInfo {
+  // Bounding box [x0, y0, x1, y1]
+  repeated float bbox = 1;
+  
+  // Number of rows
+  int32 row_count = 2;
+  
+  // Number of columns
+  int32 col_count = 3;
+}
+
+// Image information
+message ImageInfo {
+  // Image bounding box [x0, y0, x1, y1]
+  repeated float bbox = 1;
+  
+  // Image width
+  float width = 2;
+  
+  // Image height
+  float height = 3;
+  
+  // Image format
+  string format = 4;
+  
+  // Image name or path
+  string name = 5;
+}
+
+// Graphics information
+message GraphicsInfo {
+  // Graphics bounding box [x0, y0, x1, y1]
+  repeated float bbox = 1;
+}
+
+// Word information
+message WordInfo {
+  // Word bounding box [x0, y0, x1, y1]
+  repeated float bbox = 1;
+  
+  // Word text
+  string word = 2;
+  
+  // Block number
+  int32 block_number = 3;
+  
+  // Line number
+  int32 line_number = 4;
+  
+  // Word number
+  int32 word_number = 5;
+}
+
